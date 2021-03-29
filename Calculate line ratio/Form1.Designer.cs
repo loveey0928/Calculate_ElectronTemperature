@@ -85,6 +85,7 @@ namespace Calculate_line_ratio
             this.Controls.Add(this.btnFileLoad);
             this.Name = "Form1";
             this.Text = "Form1";
+            this.Load += new System.EventHandler(this.Form1_Load);
             ((System.ComponentModel.ISupportInitialize)(this.dgv1)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();

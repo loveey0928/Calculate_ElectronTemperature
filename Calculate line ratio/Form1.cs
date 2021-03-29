@@ -1,14 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
 using System.Data.OleDb;
-using System.Drawing;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 //using Microsoft.Office.Interop.Excel;
 
@@ -22,6 +17,24 @@ namespace Calculate_line_ratio
         {
             InitializeComponent();
         }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            double nearestWaveLgth = CLineRatio_Te.dWaveLgthIntensity.Keys.Max();
+            double testValue = 816;
+            foreach (double Key in CLineRatio_Te.dWaveLgthIntensity.Keys)
+            {
+                double diffOfMaxAndTestValue = nearestWaveLgth - testValue; // dWaveLgthIntensity key값의 최대값과 testValue의 차이
+                double diffOfNowKeyAndTestValue = Key - testValue; // dWaveLgthIntensity 현재 key 값과 testValue의 차이
+
+                if (Math.Abs(diffOfNowKeyAndTestValue) < Math.Abs(diffOfMaxAndTestValue))
+                {
+                    nearestWaveLgth = Key;
+                }
+            }
+            //Console.WriteLine(nearestWaveLgth.ToString()+"    "+CLineRatio_Te.dWaveLgthIntensity[nearestWaveLgth]);
+        }
+
 
         private void fBtnFileLoad_Click(object sender, EventArgs e)
         {
@@ -37,7 +50,10 @@ namespace Calculate_line_ratio
                 Console.WriteLine(String.Format("{0} was imported by btn_aFileLoad_Click", filePath));
 
                 if (filePath.EndsWith(".csv"))
+                { 
                     dtA = CSVconvertToDataTable(filePath, "dtA");   // 이 함수 쓰려면 csv 파일 맨 윗줄의 cell이 하나라도 비어있으면 안됨.
+                    Console.WriteLine("file loaded");
+                }
                 else if (filePath.EndsWith(".xlsx") || filePath.EndsWith(".xls"))
                 { 
                     //dtA = Xlsx_xlsConvertToDataTable(filePath, "dtA");
@@ -82,7 +98,9 @@ namespace Calculate_line_ratio
                 if (dt.Rows.Count > 0)
                 {
                     if (dtType == "dtA")
-                        dgv1.DataSource = dt;
+                    { 
+                        //dgv1.DataSource = dt;
+                    }
                     //else if (dtType == "dtB")
                     //    dgv_2.DataSource = dt;
                 }
@@ -176,19 +194,19 @@ namespace Calculate_line_ratio
 
         //    int dtA_ColumnCount = dtA.Columns.Count - 1;
 
-        //    for (int x1=1 ; x1<=dtA_ColumnCount ; x1++) 
+        //    for (int x1 = 1; x1 <= dtA_ColumnCount; x1++)
         //    {
-        //        for (int x2 = 1 ; x2 <= dtA_ColumnCount ; x2++)
+        //        for (int x2 = 1; x2 <= dtA_ColumnCount; x2++)
         //        {
         //            if (x2 != x1)  // column이 동일하면 그냥 skip
         //            {
-        //                string newColumnName = dtA.Columns[x1] +"nm"+"/" + dtA.Columns[x2]+"nm";
+        //                string newColumnName = dtA.Columns[x1] + "nm" + "/" + dtA.Columns[x2] + "nm";
         //                if (!dtA.Columns.Contains(newColumnName))
         //                {
         //                    dtA.Columns.Add(newColumnName);
         //                }
 
-                       
+
 
         //                for (int rowNum = 0; rowNum <= dtA.Rows.Count - 1; rowNum++)
         //                {
@@ -197,7 +215,7 @@ namespace Calculate_line_ratio
 
         //                    dtA.Rows[rowNum][newColumnName] = dx1Value / dx2Value;
         //                }
-                        
+
 
         //            }
         //        }
@@ -209,9 +227,9 @@ namespace Calculate_line_ratio
 
         private void btnCalLineRatio_Click(object sender, EventArgs e)
         {
-            MessageBox.Show(dtA.Columns.Count.ToString());
+            MessageBox.Show("칼럼 갯수 : " + dtA.Columns.Count.ToString());
 
-            MessageBox.Show(dtA.Columns[1].ToString());
+            MessageBox.Show("첫번째 칼럼명 :" + dtA.Columns[1].ToString());
 
             int dtA_ColumnCount = dtA.Columns.Count - 1;
 
@@ -229,21 +247,71 @@ namespace Calculate_line_ratio
 
 
 
-                        for (int rowNum = 1; rowNum <= dtA.Rows.Count - 1; rowNum++)
-                        {
+                        //for (int rowNum = 0; rowNum <= dtA.Rows.Count - 1; rowNum++)
+                        //{
+                            int rowNum = 0;
+                            
                             double dx1Value = double.Parse(dtA.Rows[rowNum][x1].ToString());
                             double dx2Value = double.Parse(dtA.Rows[rowNum][x2].ToString());
 
                             dtA.Rows[rowNum][newColumnName] = dx1Value / dx2Value;
-                        }
+                            
+                        //}
 
 
                     }
                 }
+                Console.WriteLine("진행률 :" + x1.ToString() + "/" + (dtA_ColumnCount).ToString());
             }
-
-            dgv1.DataSource = dtA;
+            Console.WriteLine("done");
+            MessageBox.Show("done");
+            ExpoetToCSV(dtA, "lineratio222.csv");
+            //dgv1.DataSource = dtA;
+            MessageBox.Show("!!!!!!!!!!");
+            //dgv1.DataSource = dtA;
 
         }
+
+        public static void ExpoetToCSV(DataTable dtDataTable, string strFilePath)
+        {
+
+            StreamWriter sw = new StreamWriter(strFilePath, false, System.Text.Encoding.Default);
+            //headers   
+            for (int i = 0; i < dtDataTable.Columns.Count; i++)
+            {
+                sw.Write(dtDataTable.Columns[i].ToString().Trim());
+                if (i < dtDataTable.Columns.Count - 1)
+                {
+                    sw.Write(",");
+                }
+            }
+            sw.Write(sw.NewLine);
+            foreach (DataRow dr in dtDataTable.Rows)
+            {
+                for (int i = 0; i < dtDataTable.Columns.Count; i++)
+                {
+                    if (!Convert.IsDBNull(dr[i]))
+                    {
+                        string value = dr[i].ToString().Trim();
+                        if (value.Contains(','))
+                        {
+                            value = String.Format("\"{0}\"", value);
+                            sw.Write(value);
+                        }
+                        else
+                        {
+                            sw.Write(dr[i].ToString().Trim());
+                        }
+                    }
+                    if (i < dtDataTable.Columns.Count - 1)
+                    {
+                        sw.Write(",");
+                    }
+                }
+                sw.Write(sw.NewLine);
+            }
+            sw.Close();
+        }
+
     }
 }
