@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.OleDb;
 using System.Globalization;
@@ -7,11 +8,13 @@ using System.Linq;
 using System.Windows.Forms;
 //using Microsoft.Office.Interop.Excel;
 
+
 namespace Calculate_line_ratio
 {
     public partial class Form1 : Form
     {
         DataTable dtA = new DataTable();
+        int _MedianSamplingNum = 5;
 
         public Form1()
         {
@@ -20,19 +23,7 @@ namespace Calculate_line_ratio
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            double nearestWaveLgth = CLineRatio_Te.dWaveLgthIntensity.Keys.Max();
-            double testValue = 816;
-            foreach (double Key in CLineRatio_Te.dWaveLgthIntensity.Keys)
-            {
-                double diffOfMaxAndTestValue = nearestWaveLgth - testValue; // dWaveLgthIntensity key값의 최대값과 testValue의 차이
-                double diffOfNowKeyAndTestValue = Key - testValue; // dWaveLgthIntensity 현재 key 값과 testValue의 차이
 
-                if (Math.Abs(diffOfNowKeyAndTestValue) < Math.Abs(diffOfMaxAndTestValue))
-                {
-                    nearestWaveLgth = Key;
-                }
-            }
-            //Console.WriteLine(nearestWaveLgth.ToString()+"    "+CLineRatio_Te.dWaveLgthIntensity[nearestWaveLgth]);
         }
 
 
@@ -52,12 +43,14 @@ namespace Calculate_line_ratio
                 if (filePath.EndsWith(".csv"))
                 { 
                     dtA = CSVconvertToDataTable(filePath, "dtA");   // 이 함수 쓰려면 csv 파일 맨 윗줄의 cell이 하나라도 비어있으면 안됨.
+                    lblFileName.Text = filePath;
                     Console.WriteLine("file loaded");
                 }
                 else if (filePath.EndsWith(".xlsx") || filePath.EndsWith(".xls"))
                 { 
                     //dtA = Xlsx_xlsConvertToDataTable(filePath, "dtA");
                     dtA = exceldata(filePath);
+                    lblFileName.Text = filePath;
                     dgv1.DataSource = dtA;
 
                 }
@@ -265,14 +258,14 @@ namespace Calculate_line_ratio
             }
             Console.WriteLine("done");
             MessageBox.Show("done");
-            ExpoetToCSV(dtA, "lineratio222.csv");
+            ExportToCSV(dtA, "lineratio222.csv");
             //dgv1.DataSource = dtA;
             MessageBox.Show("!!!!!!!!!!");
             //dgv1.DataSource = dtA;
 
         }
 
-        public static void ExpoetToCSV(DataTable dtDataTable, string strFilePath)
+        public static void ExportToCSV(DataTable dtDataTable, string strFilePath)
         {
 
             StreamWriter sw = new StreamWriter(strFilePath, false, System.Text.Encoding.Default);
@@ -313,5 +306,105 @@ namespace Calculate_line_ratio
             sw.Close();
         }
 
+        private void btnCalElectronTemp_Click(object sender, EventArgs e)
+        {
+            int dtA_ColumnCount = dtA.Columns.Count - 1;
+
+            for (int iX1 = 1; iX1 <= dtA_ColumnCount; iX1++)
+            {
+                for (int iX2 = 1; iX2 <= dtA_ColumnCount; iX2++)
+                {
+                    double dX1Wavelgth = double.Parse(dtA.Columns[iX1].ToString()) - 2;
+                    double dX1Energy = fFindNearestWavelgthEnergy(dX1Wavelgth);
+
+                    if (iX2 != iX1)  // column index가 동일하면 그냥 skip
+                    {
+                        double dX2Wavelgth = double.Parse(dtA.Columns[iX2].ToString()) - 2;
+                        double dX2Energy = fFindNearestWavelgthEnergy(dX2Wavelgth);
+
+                        string newColumnName = "Te("+ (dX1Wavelgth+2).ToString() + "nm" + "/" + (dX2Wavelgth+2).ToString() + "nm)";
+                        if (!dtA.Columns.Contains(newColumnName))
+                        {
+                            dtA.Columns.Add(newColumnName);
+                        }
+
+                        for (int rowNum = 0; rowNum <= dtA.Rows.Count - 1; rowNum++)
+                        {
+                            double dX1Intensity = double.Parse(dtA.Rows[rowNum][iX1].ToString());
+                            double dX2Intensity = double.Parse(dtA.Rows[rowNum][iX2].ToString());
+
+                            double dTe = -(dX1Energy-dX2Energy)/Math.Log(dX1Intensity / dX2Intensity);
+
+                            if (double.IsNaN(dTe) == true) dtA.Rows[rowNum][newColumnName] = 0;
+                            else dtA.Rows[rowNum][newColumnName] = dTe;
+                        }
+
+
+                    }
+                }
+                Console.WriteLine("진행률 :" + iX1.ToString() + "/" + (dtA_ColumnCount).ToString());
+            }
+
+            for (int iX1 = dtA_ColumnCount+1 ; iX1 <= dtA.Columns.Count-1; iX1++)
+            {
+                /// column의 초기 row[0], row[1], row[2] 값이 0이면 그 칼럼은 건너뛰게 설정
+                if (dtA.Rows[0][iX1].ToString() != "0" && dtA.Rows[1][iX1].ToString() != "0" && dtA.Rows[2][iX1].ToString() != "0")
+                {
+                    for (int rowNum = 0; rowNum <= dtA.Rows.Count - 1; rowNum++)
+                    {
+                        List<double> tempList = new List<double>();
+                        if (rowNum <= dtA.Rows.Count - _MedianSamplingNum)
+                        {
+                            int rowNumforMedian = rowNum;
+                            for (; rowNumforMedian <= rowNum + _MedianSamplingNum-1; rowNumforMedian++)
+                            {
+                                double dX1Intensity = double.Parse(dtA.Rows[rowNumforMedian][iX1].ToString());
+                                tempList.Add(dX1Intensity);
+                            }
+                        }
+                        else
+                        {
+                            int rowNumforMedian = rowNum;
+                            for (; rowNumforMedian >= rowNum -_MedianSamplingNum+1; rowNumforMedian--)
+                            {
+                                double dX1Intensity = double.Parse(dtA.Rows[rowNumforMedian][iX1].ToString());
+                                tempList.Add(dX1Intensity);
+                            }
+                        }
+                        tempList.Sort();
+                        dtA.Rows[rowNum][iX1] = tempList[_MedianSamplingNum/2];
+                        tempList.Clear();
+                    }
+                    Console.WriteLine("Median filtering 진행률 :" + iX1.ToString() + "/" + (dtA.Columns.Count - 1).ToString());
+                }
+            }
+
+            Console.WriteLine("done");
+            MessageBox.Show("done");
+            ExportToCSV(dtA, "Te2.csv");
+            //dgv1.DataSource = dtA;
+            MessageBox.Show("!!!!!!!!!!");
+            //dgv1.DataSource = dtA;
+        }
+
+
+
+        double fFindNearestWavelgthEnergy(double tempWaveLgth)
+        {
+            double nearestWaveLgth = CLineRatio_Te.dWaveLgthIntensity.Keys.Max();
+
+            foreach (double Key in CLineRatio_Te.dWaveLgthIntensity.Keys)
+            {
+                double diffOfMaxAndTestValue = nearestWaveLgth - tempWaveLgth; // dWaveLgthIntensity key값의 최대값과 testValue의 차이
+                double diffOfNowKeyAndTestValue = Key - tempWaveLgth; // dWaveLgthIntensity 현재 key 값과 testValue의 차이
+
+                if (Math.Abs(diffOfNowKeyAndTestValue) < Math.Abs(diffOfMaxAndTestValue))
+                {
+                    nearestWaveLgth = Key;
+                }
+            }
+            //Console.WriteLine(nearestWaveLgth.ToString()+"    "+CLineRatio_Te.dWaveLgthIntensity[nearestWaveLgth]);
+            return CLineRatio_Te.dWaveLgthIntensity[nearestWaveLgth]; 
+        }
     }
 }

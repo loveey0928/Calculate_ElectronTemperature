@@ -33,12 +33,14 @@ namespace Calculate_line_ratio
             this.lblFileName = new System.Windows.Forms.Label();
             this.dgv1 = new System.Windows.Forms.DataGridView();
             this.btnCalLineRatio = new System.Windows.Forms.Button();
+            this.btnCalElectronTemp = new System.Windows.Forms.Button();
+            this.lblProgress = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.dgv1)).BeginInit();
             this.SuspendLayout();
             // 
             // btnFileLoad
             // 
-            this.btnFileLoad.Location = new System.Drawing.Point(25, 51);
+            this.btnFileLoad.Location = new System.Drawing.Point(24, 12);
             this.btnFileLoad.Name = "btnFileLoad";
             this.btnFileLoad.Size = new System.Drawing.Size(118, 23);
             this.btnFileLoad.TabIndex = 0;
@@ -49,7 +51,7 @@ namespace Calculate_line_ratio
             // lblFileName
             // 
             this.lblFileName.AutoSize = true;
-            this.lblFileName.Location = new System.Drawing.Point(158, 56);
+            this.lblFileName.Location = new System.Drawing.Point(157, 17);
             this.lblFileName.Name = "lblFileName";
             this.lblFileName.Size = new System.Drawing.Size(41, 12);
             this.lblFileName.TabIndex = 1;
@@ -58,15 +60,15 @@ namespace Calculate_line_ratio
             // dgv1
             // 
             this.dgv1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dgv1.Location = new System.Drawing.Point(12, 100);
+            this.dgv1.Location = new System.Drawing.Point(12, 123);
             this.dgv1.Name = "dgv1";
             this.dgv1.RowTemplate.Height = 23;
-            this.dgv1.Size = new System.Drawing.Size(776, 338);
+            this.dgv1.Size = new System.Drawing.Size(856, 315);
             this.dgv1.TabIndex = 2;
             // 
             // btnCalLineRatio
             // 
-            this.btnCalLineRatio.Location = new System.Drawing.Point(471, 51);
+            this.btnCalLineRatio.Location = new System.Drawing.Point(551, 55);
             this.btnCalLineRatio.Name = "btnCalLineRatio";
             this.btnCalLineRatio.Size = new System.Drawing.Size(145, 23);
             this.btnCalLineRatio.TabIndex = 3;
@@ -74,11 +76,32 @@ namespace Calculate_line_ratio
             this.btnCalLineRatio.UseVisualStyleBackColor = true;
             this.btnCalLineRatio.Click += new System.EventHandler(this.btnCalLineRatio_Click);
             // 
+            // btnCalElectronTemp
+            // 
+            this.btnCalElectronTemp.Location = new System.Drawing.Point(708, 55);
+            this.btnCalElectronTemp.Name = "btnCalElectronTemp";
+            this.btnCalElectronTemp.Size = new System.Drawing.Size(160, 23);
+            this.btnCalElectronTemp.TabIndex = 4;
+            this.btnCalElectronTemp.Text = "Calculate Electron Temp";
+            this.btnCalElectronTemp.UseVisualStyleBackColor = true;
+            this.btnCalElectronTemp.Click += new System.EventHandler(this.btnCalElectronTemp_Click);
+            // 
+            // lblProgress
+            // 
+            this.lblProgress.AutoSize = true;
+            this.lblProgress.Location = new System.Drawing.Point(558, 95);
+            this.lblProgress.Name = "lblProgress";
+            this.lblProgress.Size = new System.Drawing.Size(41, 12);
+            this.lblProgress.TabIndex = 6;
+            this.lblProgress.Text = "진행률";
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(800, 450);
+            this.ClientSize = new System.Drawing.Size(880, 450);
+            this.Controls.Add(this.lblProgress);
+            this.Controls.Add(this.btnCalElectronTemp);
             this.Controls.Add(this.btnCalLineRatio);
             this.Controls.Add(this.dgv1);
             this.Controls.Add(this.lblFileName);
@@ -97,6 +120,8 @@ namespace Calculate_line_ratio
         private System.Windows.Forms.Label lblFileName;
         private System.Windows.Forms.DataGridView dgv1;
         private System.Windows.Forms.Button btnCalLineRatio;
+        private System.Windows.Forms.Button btnCalElectronTemp;
+        private System.Windows.Forms.Label lblProgress;
     }
 }
 
