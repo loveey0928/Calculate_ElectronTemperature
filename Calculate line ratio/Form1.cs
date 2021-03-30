@@ -13,7 +13,8 @@ namespace Calculate_line_ratio
 {
     public partial class Form1 : Form
     {
-        DataTable dtA = new DataTable();
+        DataTable _dtA = new DataTable();
+        int _preFilteredDtAColumnNum = 0;
         int _MedianSamplingNum = 5;
 
         public Form1()
@@ -42,16 +43,16 @@ namespace Calculate_line_ratio
 
                 if (filePath.EndsWith(".csv"))
                 { 
-                    dtA = CSVconvertToDataTable(filePath, "dtA");   // 이 함수 쓰려면 csv 파일 맨 윗줄의 cell이 하나라도 비어있으면 안됨.
+                    _dtA = CSVconvertToDataTable(filePath, "dtA");   // 이 함수 쓰려면 csv 파일 맨 윗줄의 cell이 하나라도 비어있으면 안됨.
                     lblFileName.Text = filePath;
                     Console.WriteLine("file loaded");
                 }
                 else if (filePath.EndsWith(".xlsx") || filePath.EndsWith(".xls"))
                 { 
                     //dtA = Xlsx_xlsConvertToDataTable(filePath, "dtA");
-                    dtA = exceldata(filePath);
+                    _dtA = exceldata(filePath);
                     lblFileName.Text = filePath;
-                    dgv1.DataSource = dtA;
+                    dgv1.DataSource = _dtA;
 
                 }
             }
@@ -220,11 +221,11 @@ namespace Calculate_line_ratio
 
         private void btnCalLineRatio_Click(object sender, EventArgs e)
         {
-            MessageBox.Show("칼럼 갯수 : " + dtA.Columns.Count.ToString());
+            MessageBox.Show("칼럼 갯수 : " + _dtA.Columns.Count.ToString());
 
-            MessageBox.Show("첫번째 칼럼명 :" + dtA.Columns[1].ToString());
+            MessageBox.Show("첫번째 칼럼명 :" + _dtA.Columns[1].ToString());
 
-            int dtA_ColumnCount = dtA.Columns.Count - 1;
+            int dtA_ColumnCount = _dtA.Columns.Count - 1;
 
             for (int x1 = 1; x1 <= dtA_ColumnCount; x1++)
             {
@@ -232,10 +233,10 @@ namespace Calculate_line_ratio
                 {
                     if (x2 != x1)  // column이 동일하면 그냥 skip
                     {
-                        string newColumnName = dtA.Columns[x1] + "nm" + "/" + dtA.Columns[x2] + "nm";
-                        if (!dtA.Columns.Contains(newColumnName))
+                        string newColumnName = _dtA.Columns[x1] + "nm" + "/" + _dtA.Columns[x2] + "nm";
+                        if (!_dtA.Columns.Contains(newColumnName))
                         {
-                            dtA.Columns.Add(newColumnName);
+                            _dtA.Columns.Add(newColumnName);
                         }
 
 
@@ -244,10 +245,10 @@ namespace Calculate_line_ratio
                         //{
                             int rowNum = 0;
                             
-                            double dx1Value = double.Parse(dtA.Rows[rowNum][x1].ToString());
-                            double dx2Value = double.Parse(dtA.Rows[rowNum][x2].ToString());
+                            double dx1Value = double.Parse(_dtA.Rows[rowNum][x1].ToString());
+                            double dx2Value = double.Parse(_dtA.Rows[rowNum][x2].ToString());
 
-                            dtA.Rows[rowNum][newColumnName] = dx1Value / dx2Value;
+                            _dtA.Rows[rowNum][newColumnName] = dx1Value / dx2Value;
                             
                         //}
 
@@ -258,7 +259,7 @@ namespace Calculate_line_ratio
             }
             Console.WriteLine("done");
             MessageBox.Show("done");
-            ExportToCSV(dtA, "lineratio222.csv");
+            ExportToCSV(_dtA, "lineratio222.csv");
             //dgv1.DataSource = dtA;
             MessageBox.Show("!!!!!!!!!!");
             //dgv1.DataSource = dtA;
@@ -306,13 +307,108 @@ namespace Calculate_line_ratio
             sw.Close();
         }
 
+        //private void btnCalElectronTemp_Click(object sender, EventArgs e)
+        //{
+        //    int dtA_ColumnCount = dtA.Columns.Count - 1;
+
+        //    for (int iX1 = 1; iX1 <= dtA_ColumnCount; iX1++)
+        //    {
+        //        for (int iX2 = 1; iX2 <= dtA_ColumnCount; iX2++)
+        //        {
+        //            double dX1Wavelgth = double.Parse(dtA.Columns[iX1].ToString()) - 2;
+        //            double dX1Energy = fFindNearestWavelgthEnergy(dX1Wavelgth);
+
+        //            if (iX2 != iX1)  // column index가 동일하면 그냥 skip
+        //            {
+        //                double dX2Wavelgth = double.Parse(dtA.Columns[iX2].ToString()) - 2;
+        //                double dX2Energy = fFindNearestWavelgthEnergy(dX2Wavelgth);
+
+        //                string newColumnName = "Te("+ (dX1Wavelgth+2).ToString() + "nm" + "/" + (dX2Wavelgth+2).ToString() + "nm)";
+        //                if (!dtA.Columns.Contains(newColumnName))
+        //                {
+        //                    dtA.Columns.Add(newColumnName);
+        //                }
+
+        //                for (int rowNum = 0; rowNum <= dtA.Rows.Count - 1; rowNum++)
+        //                {
+        //                    double dX1Intensity = double.Parse(dtA.Rows[rowNum][iX1].ToString());
+        //                    double dX2Intensity = double.Parse(dtA.Rows[rowNum][iX2].ToString());
+
+        //                    double dTe = -(dX1Energy-dX2Energy)/Math.Log(dX1Intensity / dX2Intensity);
+
+        //                    if (double.IsNaN(dTe) == true) dtA.Rows[rowNum][newColumnName] = 0;
+        //                    else dtA.Rows[rowNum][newColumnName] = dTe;
+        //                }
+
+
+        //            }
+        //        }
+        //        Console.WriteLine("진행률 :" + iX1.ToString() + "/" + (dtA_ColumnCount).ToString());
+        //    }
+
+        //    for (int iX1 = dtA_ColumnCount+1 ; iX1 <= dtA.Columns.Count-1; iX1++)
+        //    {
+        //        /// column의 초기 row[0], row[1], row[2] 값이 0이면 그 칼럼은 건너뛰게 설정
+        //        if (dtA.Rows[0][iX1].ToString() != "0" && dtA.Rows[1][iX1].ToString() != "0" && dtA.Rows[2][iX1].ToString() != "0")
+        //        {
+        //            for (int rowNum = 0; rowNum <= dtA.Rows.Count - 1; rowNum++)
+        //            {
+        //                List<double> tempList = new List<double>();
+        //                if (rowNum <= dtA.Rows.Count - _MedianSamplingNum)
+        //                {
+        //                    int rowNumforMedian = rowNum;
+        //                    for (; rowNumforMedian <= rowNum + _MedianSamplingNum-1; rowNumforMedian++)
+        //                    {
+        //                        double dX1Intensity = double.Parse(dtA.Rows[rowNumforMedian][iX1].ToString());
+        //                        tempList.Add(dX1Intensity);
+        //                    }
+        //                }
+        //                else
+        //                {
+        //                    int rowNumforMedian = rowNum;
+        //                    for (; rowNumforMedian >= rowNum -_MedianSamplingNum+1; rowNumforMedian--)
+        //                    {
+        //                        double dX1Intensity = double.Parse(dtA.Rows[rowNumforMedian][iX1].ToString());
+        //                        tempList.Add(dX1Intensity);
+        //                    }
+        //                }
+        //                tempList.Sort();
+        //                dtA.Rows[rowNum][iX1] = tempList[_MedianSamplingNum/2];
+        //                tempList.Clear();
+        //            }
+        //            Console.WriteLine("Median filtering 진행률 :" + iX1.ToString() + "/" + (dtA.Columns.Count - 1).ToString());
+        //        }
+        //    }
+
+        //    Console.WriteLine("done");
+        //    MessageBox.Show("done");
+        //    ExportToCSV(dtA, "Te2.csv");
+        //    //dgv1.DataSource = dtA;
+        //    MessageBox.Show("!!!!!!!!!!");
+        //    //dgv1.DataSource = dtA;
+        //}
+
         private void btnCalElectronTemp_Click(object sender, EventArgs e)
         {
-            int dtA_ColumnCount = dtA.Columns.Count - 1;
+            _dtA = fCalElectronTemp(_dtA);
 
-            for (int iX1 = 1; iX1 <= dtA_ColumnCount; iX1++)
+            _dtA = fElectronTempMedianFiltering(_dtA);
+
+            Console.WriteLine("done");
+            MessageBox.Show("done");
+            ExportToCSV(_dtA, "Te2.csv");
+            //dgv1.DataSource = dtA;
+            MessageBox.Show("!!!!!!!!!!");
+            //dgv1.DataSource = dtA;
+        }
+
+        DataTable fCalElectronTemp(DataTable dtA)
+        {
+            _preFilteredDtAColumnNum = dtA.Columns.Count - 1;
+
+            for (int iX1 = 1; iX1 <= _preFilteredDtAColumnNum; iX1++)
             {
-                for (int iX2 = 1; iX2 <= dtA_ColumnCount; iX2++)
+                for (int iX2 = 1; iX2 <= _preFilteredDtAColumnNum; iX2++)
                 {
                     double dX1Wavelgth = double.Parse(dtA.Columns[iX1].ToString()) - 2;
                     double dX1Energy = fFindNearestWavelgthEnergy(dX1Wavelgth);
@@ -322,7 +418,7 @@ namespace Calculate_line_ratio
                         double dX2Wavelgth = double.Parse(dtA.Columns[iX2].ToString()) - 2;
                         double dX2Energy = fFindNearestWavelgthEnergy(dX2Wavelgth);
 
-                        string newColumnName = "Te("+ (dX1Wavelgth+2).ToString() + "nm" + "/" + (dX2Wavelgth+2).ToString() + "nm)";
+                        string newColumnName = "Te(" + (dX1Wavelgth + 2).ToString() + "nm" + "/" + (dX2Wavelgth + 2).ToString() + "nm)";
                         if (!dtA.Columns.Contains(newColumnName))
                         {
                             dtA.Columns.Add(newColumnName);
@@ -333,19 +429,25 @@ namespace Calculate_line_ratio
                             double dX1Intensity = double.Parse(dtA.Rows[rowNum][iX1].ToString());
                             double dX2Intensity = double.Parse(dtA.Rows[rowNum][iX2].ToString());
 
-                            double dTe = -(dX1Energy-dX2Energy)/Math.Log(dX1Intensity / dX2Intensity);
+                            double dTe = -(dX1Energy - dX2Energy) / Math.Log(dX1Intensity / dX2Intensity);
 
                             if (double.IsNaN(dTe) == true) dtA.Rows[rowNum][newColumnName] = 0;
+                            else if (100000 < dTe) dtA.Rows[rowNum][newColumnName] = 65000;
+                            else if (dTe < -100000) dtA.Rows[rowNum][newColumnName] = -65000;
                             else dtA.Rows[rowNum][newColumnName] = dTe;
                         }
 
 
                     }
                 }
-                Console.WriteLine("진행률 :" + iX1.ToString() + "/" + (dtA_ColumnCount).ToString());
+                Console.WriteLine("진행률 :" + iX1.ToString() + "/" + (_preFilteredDtAColumnNum).ToString());
             }
+            return dtA;
+        }
 
-            for (int iX1 = dtA_ColumnCount+1 ; iX1 <= dtA.Columns.Count-1; iX1++)
+        DataTable fElectronTempMedianFiltering(DataTable dtA)
+        {
+            for (int iX1 = _preFilteredDtAColumnNum+1; iX1 <= dtA.Columns.Count - 1; iX1++)
             {
                 /// column의 초기 row[0], row[1], row[2] 값이 0이면 그 칼럼은 건너뛰게 설정
                 if (dtA.Rows[0][iX1].ToString() != "0" && dtA.Rows[1][iX1].ToString() != "0" && dtA.Rows[2][iX1].ToString() != "0")
@@ -356,7 +458,7 @@ namespace Calculate_line_ratio
                         if (rowNum <= dtA.Rows.Count - _MedianSamplingNum)
                         {
                             int rowNumforMedian = rowNum;
-                            for (; rowNumforMedian <= rowNum + _MedianSamplingNum-1; rowNumforMedian++)
+                            for (; rowNumforMedian <= rowNum + _MedianSamplingNum - 1; rowNumforMedian++)
                             {
                                 double dX1Intensity = double.Parse(dtA.Rows[rowNumforMedian][iX1].ToString());
                                 tempList.Add(dX1Intensity);
@@ -365,30 +467,22 @@ namespace Calculate_line_ratio
                         else
                         {
                             int rowNumforMedian = rowNum;
-                            for (; rowNumforMedian >= rowNum -_MedianSamplingNum+1; rowNumforMedian--)
+                            for (; rowNumforMedian >= rowNum - _MedianSamplingNum + 1; rowNumforMedian--)
                             {
                                 double dX1Intensity = double.Parse(dtA.Rows[rowNumforMedian][iX1].ToString());
                                 tempList.Add(dX1Intensity);
                             }
                         }
                         tempList.Sort();
-                        dtA.Rows[rowNum][iX1] = tempList[_MedianSamplingNum/2];
+                        dtA.Rows[rowNum][iX1] = tempList[_MedianSamplingNum / 2];
                         tempList.Clear();
                     }
                     Console.WriteLine("Median filtering 진행률 :" + iX1.ToString() + "/" + (dtA.Columns.Count - 1).ToString());
                 }
             }
-
-            Console.WriteLine("done");
-            MessageBox.Show("done");
-            ExportToCSV(dtA, "Te2.csv");
-            //dgv1.DataSource = dtA;
-            MessageBox.Show("!!!!!!!!!!");
-            //dgv1.DataSource = dtA;
+            return dtA;
         }
-
-
-
+        
         double fFindNearestWavelgthEnergy(double tempWaveLgth)
         {
             double nearestWaveLgth = CLineRatio_Te.dWaveLgthIntensity.Keys.Max();
