@@ -8,6 +8,8 @@ namespace Calculate_line_ratio
 {
     class CLineRatio_Te
     {
+        public static List<double> o2List = new List<double>(new double[] { 779.222, 779.539, 779.856 } );
+
         public static Dictionary<double, double> dWaveLgthIntensity = new Dictionary<double, double>()
         {
             {826.45, 13.327},
@@ -23,7 +25,6 @@ namespace Calculate_line_ratio
             {772.376, 13.153},
             {777.194, 10.740},
             {777.417, 10.740},
-            {777.539, 10.740},
             {794.817, 13.282},
             {696.543, 13.327},
             {706.721, 13.302},

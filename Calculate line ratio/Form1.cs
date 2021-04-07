@@ -24,6 +24,17 @@ namespace Calculate_line_ratio
 
         private void Form1_Load(object sender, EventArgs e)
         {
+            List<int> vs = new List<int>();
+            vs.Add(100);
+            vs.Add(100);
+            vs.Add(100);
+            Console.WriteLine(vs);
+
+            vs.RemoveAt(0);
+
+            vs.Add(300);
+
+            Console.WriteLine(vs);
 
         }
 
@@ -396,54 +407,59 @@ namespace Calculate_line_ratio
 
             Console.WriteLine("done");
             MessageBox.Show("done");
-            ExportToCSV(_dtA, "Te2.csv");
+            ExportToCSV(_dtA, "PP_Te.csv");
             //dgv1.DataSource = dtA;
             MessageBox.Show("!!!!!!!!!!");
             //dgv1.DataSource = dtA;
         }
 
-        DataTable fCalElectronTemp(DataTable dtA)
-        {
-            _preFilteredDtAColumnNum = dtA.Columns.Count - 1;
+        /// <summary>
+        /// partial pressure 고려 안하고 짠거!
+        /// </summary>
+        /// <param name="dtA"></param>
+        /// <returns></returns>
+        //DataTable fCalElectronTemp(DataTable dtA)
+        //{
+        //    _preFilteredDtAColumnNum = dtA.Columns.Count - 1;
 
-            for (int iX1 = 1; iX1 <= _preFilteredDtAColumnNum; iX1++)
-            {
-                for (int iX2 = 1; iX2 <= _preFilteredDtAColumnNum; iX2++)
-                {
-                    double dX1Wavelgth = double.Parse(dtA.Columns[iX1].ToString()) - 2;
-                    double dX1Energy = fFindNearestWavelgthEnergy(dX1Wavelgth);
+        //    for (int iX1 = 1; iX1 <= _preFilteredDtAColumnNum; iX1++)
+        //    {
+        //        for (int iX2 = 1; iX2 <= _preFilteredDtAColumnNum; iX2++)
+        //        {
+        //            double dX1Wavelgth = double.Parse(dtA.Columns[iX1].ToString()) - 2;
+        //            double dX1Energy = fFindNearestWavelgthEnergy(dX1Wavelgth);
 
-                    if (iX2 != iX1)  // column index가 동일하면 그냥 skip
-                    {
-                        double dX2Wavelgth = double.Parse(dtA.Columns[iX2].ToString()) - 2;
-                        double dX2Energy = fFindNearestWavelgthEnergy(dX2Wavelgth);
+        //            if (iX2 != iX1)  // column index가 동일하면 그냥 skip
+        //            {
+        //                double dX2Wavelgth = double.Parse(dtA.Columns[iX2].ToString()) - 2;
+        //                double dX2Energy = fFindNearestWavelgthEnergy(dX2Wavelgth);
 
-                        string newColumnName = "Te(" + (dX1Wavelgth + 2).ToString() + "nm" + "/" + (dX2Wavelgth + 2).ToString() + "nm)";
-                        if (!dtA.Columns.Contains(newColumnName))
-                        {
-                            dtA.Columns.Add(newColumnName);
-                        }
+        //                string newColumnName = "Te(" + (dX1Wavelgth + 2).ToString() + "nm" + "/" + (dX2Wavelgth + 2).ToString() + "nm)";
+        //                if (!dtA.Columns.Contains(newColumnName))
+        //                {
+        //                    dtA.Columns.Add(newColumnName);
+        //                }
 
-                        for (int rowNum = 0; rowNum <= dtA.Rows.Count - 1; rowNum++)
-                        {
-                            double dX1Intensity = double.Parse(dtA.Rows[rowNum][iX1].ToString());
-                            double dX2Intensity = double.Parse(dtA.Rows[rowNum][iX2].ToString());
+        //                for (int rowNum = 0; rowNum <= dtA.Rows.Count - 1; rowNum++)
+        //                {
+        //                    double dX1Intensity = double.Parse(dtA.Rows[rowNum][iX1].ToString());
+        //                    double dX2Intensity = double.Parse(dtA.Rows[rowNum][iX2].ToString());
 
-                            double dTe = -(dX1Energy - dX2Energy) / Math.Log(dX1Intensity / dX2Intensity);
+        //                    double dTe = -(dX1Energy - dX2Energy) / Math.Log(dX1Intensity / dX2Intensity);
 
-                            if (double.IsNaN(dTe) == true) dtA.Rows[rowNum][newColumnName] = 0;
-                            else if (100000 < dTe) dtA.Rows[rowNum][newColumnName] = 65000;
-                            else if (dTe < -100000) dtA.Rows[rowNum][newColumnName] = -65000;
-                            else dtA.Rows[rowNum][newColumnName] = dTe;
-                        }
+        //                    if (double.IsNaN(dTe) == true) dtA.Rows[rowNum][newColumnName] = 0;
+        //                    else if (100000 < dTe) dtA.Rows[rowNum][newColumnName] = 65000;
+        //                    else if (dTe < -100000) dtA.Rows[rowNum][newColumnName] = -65000;
+        //                    else dtA.Rows[rowNum][newColumnName] = dTe;
+        //                }
 
 
-                    }
-                }
-                Console.WriteLine("진행률 :" + iX1.ToString() + "/" + (_preFilteredDtAColumnNum).ToString());
-            }
-            return dtA;
-        }
+        //            }
+        //        }
+        //        Console.WriteLine("진행률 :" + iX1.ToString() + "/" + (_preFilteredDtAColumnNum).ToString());
+        //    }
+        //    return dtA;
+        //}    
 
         DataTable fElectronTempMedianFiltering(DataTable dtA)
         {
@@ -500,5 +516,61 @@ namespace Calculate_line_ratio
             //Console.WriteLine(nearestWaveLgth.ToString()+"    "+CLineRatio_Te.dWaveLgthIntensity[nearestWaveLgth]);
             return CLineRatio_Te.dWaveLgthIntensity[nearestWaveLgth]; 
         }
+
+
+        /// <summary>
+        /// O2 779.~(777.~) Partial pressure 고려해서 짠거
+        /// </summary>
+        /// <param name="dtA"></param>
+        /// <returns></returns>
+        DataTable fCalElectronTemp(DataTable dtA)
+        {
+            _preFilteredDtAColumnNum = dtA.Columns.Count - 1;
+
+            for (int iX1 = 1; iX1 <= _preFilteredDtAColumnNum; iX1++)
+            {
+                for (int iX2 = 1; iX2 <= _preFilteredDtAColumnNum; iX2++)
+                {
+                    double dX1Wavelgth = double.Parse(dtA.Columns[iX1].ToString()) - 2;
+                    double dX1Energy = fFindNearestWavelgthEnergy(dX1Wavelgth);
+
+                    if (iX2 != iX1)  // column index가 동일하면 그냥 skip
+                    {
+                        double dX2Wavelgth = double.Parse(dtA.Columns[iX2].ToString()) - 2;
+                        double dX2Energy = fFindNearestWavelgthEnergy(dX2Wavelgth);
+
+                        string newColumnName = "Te(" + (dX1Wavelgth + 2).ToString() + "nm" + "/" + (dX2Wavelgth + 2).ToString() + "nm)";
+                        if (!dtA.Columns.Contains(newColumnName))
+                        {
+                            dtA.Columns.Add(newColumnName);
+                        }
+
+                        for (int rowNum = 0; rowNum <= dtA.Rows.Count - 1; rowNum++)
+                        {
+                            double dX1Intensity = double.Parse(dtA.Rows[rowNum][iX1].ToString());
+                            double dX2Intensity = double.Parse(dtA.Rows[rowNum][iX2].ToString());
+                            double dTe = 0;
+
+                            // Partial pressure 부분 추가를 위한 부분
+                            if ( CLineRatio_Te.o2List.Contains(dX1Wavelgth+2) && !CLineRatio_Te.o2List.Contains(dX2Wavelgth+2) )            dTe = -(dX1Energy - dX2Energy) / Math.Log(dX1Intensity / dX2Intensity*0.072);    // O/Ar    P(Ar/O)
+                            else if ( !CLineRatio_Te.o2List.Contains(dX1Wavelgth+2) && CLineRatio_Te.o2List.Contains(dX2Wavelgth+2) )       dTe = -(dX1Energy - dX2Energy) / Math.Log(dX1Intensity / dX2Intensity*13.75);    //  Ar/O   P(O/Ar)
+                            else                                                                                                                              dTe = -(dX1Energy - dX2Energy) / Math.Log(dX1Intensity / dX2Intensity); 
+
+
+                            // 무한대 값이나 NaN 값을 제거하기 위한 부분
+                            if (double.IsNaN(dTe) == true)                                                     dtA.Rows[rowNum][newColumnName] = 0;
+                            else if (100000 < dTe)                                                                dtA.Rows[rowNum][newColumnName] = 65000;
+                            else if (dTe < -100000)                                                               dtA.Rows[rowNum][newColumnName] = -65000;
+                            else                                                                                      dtA.Rows[rowNum][newColumnName] = dTe;
+                        }
+
+
+                    }
+                }
+                Console.WriteLine("진행률 :" + iX1.ToString() + "/" + (_preFilteredDtAColumnNum).ToString());
+            }
+            return dtA;
+        }
+
     }
 }
