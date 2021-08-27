@@ -270,7 +270,7 @@ namespace Calculate_line_ratio
             }
             Console.WriteLine("done");
             MessageBox.Show("done");
-            ExportToCSV(_dtA, "lineratio222.csv");
+            ExportToCSV(_dtA, "unjjang_Ar3_run1.csv");
             //dgv1.DataSource = dtA;
             MessageBox.Show("!!!!!!!!!!");
             //dgv1.DataSource = dtA;
@@ -401,13 +401,14 @@ namespace Calculate_line_ratio
 
         private void btnCalElectronTemp_Click(object sender, EventArgs e)
         {
-            _dtA = fCalElectronTemp(_dtA);
+            //_dtA = fCalElectronTemp(_dtA);
+            _dtA = fCalElectronTemp_unjjang(_dtA);
 
             _dtA = fElectronTempMedianFiltering(_dtA);
 
             Console.WriteLine("done");
             MessageBox.Show("done");
-            ExportToCSV(_dtA, "PP_Te.csv");
+            ExportToCSV(_dtA, "Test1_Cal_ElecTemp_Ar5_run9_Te_2.4650.csv");
             //dgv1.DataSource = dtA;
             MessageBox.Show("!!!!!!!!!!");
             //dgv1.DataSource = dtA;
@@ -517,6 +518,23 @@ namespace Calculate_line_ratio
             return CLineRatio_Te.dWaveLgthIntensity[nearestWaveLgth]; 
         }
 
+        double fFindNearstCrossSection(double tempWaveLgth)
+        {
+            double nearestWaveLgth = CLineRatio_Te.dCrossSection.Keys.Max();
+
+            foreach (double Key in CLineRatio_Te.dCrossSection.Keys)
+            {
+                double diffOfMaxAndTestValue = nearestWaveLgth - tempWaveLgth; // dWaveLgthIntensity key값의 최대값과 testValue의 차이
+                double diffOfNowKeyAndTestValue = Key - tempWaveLgth; // dWaveLgthIntensity 현재 key 값과 testValue의 차이
+
+                if (Math.Abs(diffOfNowKeyAndTestValue) < Math.Abs(diffOfMaxAndTestValue))
+                {
+                    nearestWaveLgth = Key;
+                }
+            }
+
+            return CLineRatio_Te.dCrossSection[nearestWaveLgth];
+        }
 
         /// <summary>
         /// O2 779.~(777.~) Partial pressure 고려해서 짠거
@@ -531,15 +549,15 @@ namespace Calculate_line_ratio
             {
                 for (int iX2 = 1; iX2 <= _preFilteredDtAColumnNum; iX2++)
                 {
-                    double dX1Wavelgth = double.Parse(dtA.Columns[iX1].ToString()) - 2;
+                    double dX1Wavelgth = double.Parse(dtA.Columns[iX1].ToString());// [미래반도체] : double dX1Wavelgth = double.Parse(dtA.Columns[iX1].ToString()) - 2;
                     double dX1Energy = fFindNearestWavelgthEnergy(dX1Wavelgth);
 
                     if (iX2 != iX1)  // column index가 동일하면 그냥 skip
                     {
-                        double dX2Wavelgth = double.Parse(dtA.Columns[iX2].ToString()) - 2;
+                        double dX2Wavelgth = double.Parse(dtA.Columns[iX2].ToString());// [미래반도체] : double dX2Wavelgth = double.Parse(dtA.Columns[iX2].ToString()) - 2;
                         double dX2Energy = fFindNearestWavelgthEnergy(dX2Wavelgth);
 
-                        string newColumnName = "Te(" + (dX1Wavelgth + 2).ToString() + "nm" + "/" + (dX2Wavelgth + 2).ToString() + "nm)";
+                        string newColumnName = "Te(" + (dX1Wavelgth).ToString() + "nm" + "/" + (dX2Wavelgth).ToString() + "nm)"; // [미래반도체] : string newColumnName = "Te(" + (dX1Wavelgth + 2).ToString() + "nm" + "/" + (dX2Wavelgth + 2).ToString() + "nm)";
                         if (!dtA.Columns.Contains(newColumnName))
                         {
                             dtA.Columns.Add(newColumnName);
@@ -552,13 +570,13 @@ namespace Calculate_line_ratio
                             double dTe = 0;
 
                             // Partial pressure 부분 추가를 위한 부분
-                            if ( CLineRatio_Te.o2List.Contains(dX1Wavelgth+2) && !CLineRatio_Te.o2List.Contains(dX2Wavelgth+2) )            dTe = -(dX1Energy - dX2Energy) / Math.Log(dX1Intensity / dX2Intensity*0.072);    // O/Ar    P(Ar/O)
-                            else if ( !CLineRatio_Te.o2List.Contains(dX1Wavelgth+2) && CLineRatio_Te.o2List.Contains(dX2Wavelgth+2) )       dTe = -(dX1Energy - dX2Energy) / Math.Log(dX1Intensity / dX2Intensity*13.75);    //  Ar/O   P(O/Ar)
+                            if ( CLineRatio_Te.o2List.Contains(dX1Wavelgth+2) && !CLineRatio_Te.o2List.Contains(dX2Wavelgth+2) )            dTe = -(dX1Energy - dX2Energy) / Math.Log(dX1Intensity / dX2Intensity*1);    // O/Ar    P(Ar/O) [경언이가 구한 방식]    //  [수린이랑 구한 방식]  :  if ( CLineRatio_Te.o2List.Contains(dX1Wavelgth+2) && !CLineRatio_Te.o2List.Contains(dX2Wavelgth+2) )            dTe = -(dX1Energy - dX2Energy) / Math.Log(dX1Intensity / dX2Intensity*0.072)
+                            else if ( !CLineRatio_Te.o2List.Contains(dX1Wavelgth+2) && CLineRatio_Te.o2List.Contains(dX2Wavelgth+2) )       dTe = -(dX1Energy - dX2Energy) / Math.Log(dX1Intensity / dX2Intensity*1);    //  Ar/O   P(O/Ar)    //  [수린이랑 구한 방식]  :  else if ( !CLineRatio_Te.o2List.Contains(dX1Wavelgth+2) && CLineRatio_Te.o2List.Contains(dX2Wavelgth+2) )       dTe = -(dX1Energy - dX2Energy) / Math.Log(dX1Intensity / dX2Intensity*13.75);
                             else                                                                                                                              dTe = -(dX1Energy - dX2Energy) / Math.Log(dX1Intensity / dX2Intensity); 
 
 
                             // 무한대 값이나 NaN 값을 제거하기 위한 부분
-                            if (double.IsNaN(dTe) == true)                                                     dtA.Rows[rowNum][newColumnName] = 0;
+                            if (double.IsNaN(dTe) == true)                                                     dtA.Rows[rowNum][newColumnName] = 0; 
                             else if (100000 < dTe)                                                                dtA.Rows[rowNum][newColumnName] = 65000;
                             else if (dTe < -100000)                                                               dtA.Rows[rowNum][newColumnName] = -65000;
                             else                                                                                      dtA.Rows[rowNum][newColumnName] = dTe;
@@ -572,5 +590,57 @@ namespace Calculate_line_ratio
             return dtA;
         }
 
+        DataTable fCalElectronTemp_unjjang(DataTable dtA)
+        {
+            _preFilteredDtAColumnNum = dtA.Columns.Count - 1;
+
+            for (int iX1 = 1; iX1 <= _preFilteredDtAColumnNum; iX1++)
+            {
+                for (int iX2 = 1; iX2 <= _preFilteredDtAColumnNum; iX2++)
+                {
+                    double dX1Wavelgth = double.Parse(dtA.Columns[iX1].ToString());// [미래반도체] : double dX1Wavelgth = double.Parse(dtA.Columns[iX1].ToString()) - 2;
+                    double dX1Energy = fFindNearestWavelgthEnergy(dX1Wavelgth);
+                    double dCrossSection1 = fFindNearstCrossSection(dX1Wavelgth);
+                    double dK = 8.617343 * Math.Pow(10,-5);
+
+                    if (iX2 != iX1)  // column index가 동일하면 그냥 skip
+                    {
+                        double dX2Wavelgth = double.Parse(dtA.Columns[iX2].ToString());// [미래반도체] : double dX2Wavelgth = double.Parse(dtA.Columns[iX2].ToString()) - 2;
+                        double dX2Energy = fFindNearestWavelgthEnergy(dX2Wavelgth);
+                        double dCrossSection2 = fFindNearstCrossSection(dX2Wavelgth);
+
+                        string newColumnName = "Te(" + (dX1Wavelgth).ToString() + "nm" + "/" + (dX2Wavelgth).ToString() + "nm)"; // [미래반도체] : string newColumnName = "Te(" + (dX1Wavelgth + 2).ToString() + "nm" + "/" + (dX2Wavelgth + 2).ToString() + "nm)";
+                        if (!dtA.Columns.Contains(newColumnName))
+                        {
+                            dtA.Columns.Add(newColumnName);
+                        }
+
+                        for (int rowNum = 0; rowNum <= dtA.Rows.Count - 1; rowNum++)
+                        {
+                            double dX1Intensity = double.Parse(dtA.Rows[rowNum][iX1].ToString());
+                            double dX2Intensity = double.Parse(dtA.Rows[rowNum][iX2].ToString());
+                            double dTe = 0;
+
+                            // Partial pressure 부분 추가를 위한 부분
+                            //if (CLineRatio_Te.o2List.Contains(dX1Wavelgth + 2) && !CLineRatio_Te.o2List.Contains(dX2Wavelgth + 2)) dTe = -(dX1Energy - dX2Energy) / Math.Log(dX1Intensity / dX2Intensity * 1);    // O/Ar    P(Ar/O) [경언이가 구한 방식]    //  [수린이랑 구한 방식]  :  if ( CLineRatio_Te.o2List.Contains(dX1Wavelgth+2) && !CLineRatio_Te.o2List.Contains(dX2Wavelgth+2) )            dTe = -(dX1Energy - dX2Energy) / Math.Log(dX1Intensity / dX2Intensity*0.072)
+                            //else if (!CLineRatio_Te.o2List.Contains(dX1Wavelgth + 2) && CLineRatio_Te.o2List.Contains(dX2Wavelgth + 2)) dTe = -(dX1Energy - dX2Energy) / Math.Log(dX1Intensity / dX2Intensity * 1);    //  Ar/O   P(O/Ar)    //  [수린이랑 구한 방식]  :  else if ( !CLineRatio_Te.o2List.Contains(dX1Wavelgth+2) && CLineRatio_Te.o2List.Contains(dX2Wavelgth+2) )       dTe = -(dX1Energy - dX2Energy) / Math.Log(dX1Intensity / dX2Intensity*13.75);
+                            //else dTe = (dX2Energy - dX1Energy) / Math.Log( (dCrossSection2/dCrossSection1)* (dX1Intensity / dX2Intensity) * (dX2Energy/dX1Energy) ) / dK;
+                            dTe = (dX2Energy - dX1Energy) / dK / Math.Log((dCrossSection2 / dCrossSection1) * (dX1Intensity / dX2Intensity) * (dX2Energy / dX1Energy))  * Math.Pow(10,-4); //  [ Math.Pow(10,-4) :  K to eV ]
+
+
+                            // 무한대 값이나 NaN 값을 제거하기 위한 부분
+                            if (double.IsNaN(dTe) == true) dtA.Rows[rowNum][newColumnName] = 0;
+                            else if (100000 < dTe) dtA.Rows[rowNum][newColumnName] = 65000;
+                            else if (dTe < -100000) dtA.Rows[rowNum][newColumnName] = -65000;
+                            else dtA.Rows[rowNum][newColumnName] = dTe;
+                        }
+
+
+                    }
+                }
+                Console.WriteLine("진행률 :" + iX1.ToString() + "/" + (_preFilteredDtAColumnNum).ToString());
+            }
+            return dtA;
+        }
     }
 }
